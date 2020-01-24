@@ -1,0 +1,255 @@
+QBSP3 Revision 1.09
+===================
+
+Command Line parameters added to GDDQBSP3:
+
+  -help
+
+       Shows you all the various options that are available.
+
+  -badnormal <threshhold>
+ 
+       Normals are supposed to have a length of 1.0.  When qbsp3 checks for bad normals,
+       it will generate a "FloatPlane Error: Bad Normal" error if it finds a normal
+       shorter then 0.5.  By setting the threshhold, you can change how close to 1.0
+       it needs to be.  Setting to 0.0 means no tolerance at all (all normals must be
+       exactly 1.0).  The larger the number, the more leeway you have.
+
+       If you are seeing some strange results when testing your maps, setting this to
+       lower values may help you locate suspicous brushes.
+      
+  -origfix
+
+       In the words of David Hyde who provided code for this fix:
+
+       "This fixes the alignment of scaled textures (scale different than 1.0) used 
+       on brush models that include an origin brush. Without it, textures will be
+       aligned differently in the game than they appear in your editor ( "your
+       editor" includes BSP, qED, QERadiant, Qoole, Quark, and WorldCraft)."
+   
+  -gamedir <path>
+
+       This will set the game directory that qbsp3 uses to locate
+       textures.  Note that this isn't the textures directory itself,
+       but the parent directory where the pak files are.  Thus you could
+       do:
+
+           qbsp3 -gamedir d:\games\quake2\baseq2 mymap.map
+
+  -moddir <path>
+
+      Directory for a mod.  When looking for textures, it will search this
+      directory first before looking in the main directory.  As above, this
+      the directory where the pak files reside.  Thus you could do (assume it
+      will default to d:\games\quake2\baseq2 for main game directory):
+
+           qbsp3 -moddir d:\games\quake2\coolmod mymap.map
+
+      When looking for a texture, it will first look in coolmod, then if it could
+      not find it, would look in baseq2.  If moddir is not set, it is not used
+      at all.
+
+  When looking for textures, if it does not find the texture unpacked in the
+  textures directory, it will search the pak file itself.  If you set the mod
+  directory, it will search in the following order:
+
+      moddir:textures -> moddir:pakfile -> gamedir:textures -> gamedir:pakfile
+
+  The game directory and mod directory are used to locate textures so that qbsp3
+  can access certain texture settings it needs.  It does NOT necessarily point to
+  to the location of the map or bsp being processed. You can pass a full path to
+  qbsp3 follows:
+
+      qbsp \games\quake2\maps\mymap.map
+      qbsp d:\games\quake2\maps\mymap.map
+
+  If you do not give full path information, it will look for the map in your current
+  working directory  Thus:
+
+      c:\quake2\utils> qbsp3 -gamedir c:\quake2\baseq2 maps\mymap.map
+
+  will try to find c:\quake2\utils\maps\mymap.map, not c:\quake2\baseq2\maps\mymap.map
+      
+====
+
+Command Line parameters removed from GDDQBSP3
+
+  -draw
+
+       This was used to draw something on screen (not sure what, never saw it in
+       action) using OpenGL but some people did not have the DLL's so I removed
+       it.  I had intend to add this back in by using dynamic DLL loading sometime
+       but not so sure anymore.
+
+  -threads
+
+       This was actually disabled by id, there is a comment in the code saying
+       that it had no real effect.
+
+====
+
+Configuration Files
+
+  I have added support for configuration files.  When qbsp3 loads up, it will look
+  for a file called qbsp3.cfg.  It looks in the directory you launched the program
+  from so if you did:
+
+     d:\games\quake2\utils\maps> f:\quake2\utils\qbsp3 mymap.map
+
+  it would look for qbsp3.cfg in d:\games\quake2\utils\maps, not f:\quake2\utils.
+
+-
+
+  In the configuration file itself, you can add additional command line parameters,
+  each line being a seperate parameter.  Lines beginning with a semi-colon (';')
+  and blank lines are ignored.  qbsp3.cfg command line parameters are processed
+  before any actual command line parameters. If you had a qbsp3.cfg with the
+  following contents:
+    
+      -gamedir
+      f:\games\quake2\baseq2
+
+  then ran:
+
+    qbsp3 mymap.map
+
+  It would be exactly the same as if you ran (with no qbsp3.cfg present):
+
+    qbsp3 -gamedir f:\games\quake2\baseq2 mymap.map
+
+-
+
+  Additionally, you can call other configuration files from the command line by
+  prefixing its name with a '+'.  The contents are processed at that point.  If
+  your qbsp3.cfg has the following contents (first line is an ignored comment,
+  second line is an ignored blank line in this particular example):
+
+      ; Set game directory so qbsp3 can find textures.
+    
+      -gamedir
+      f:\games\quake2\baseq2
+
+  and a file called ctf.cfg with the following contents:
+
+      -moddir
+      f:\games\quake2\ctf
+
+  then ran:
+
+    qbsp3 -onlyents +ctf mymap.map
+
+  It would be exactly the same as if you ran (with no configuration files at all):
+
+    qbsp3 -gamedir f:\games\quake2\baseq2 -onlyents -moddir f:\games\quake2\ctf mymap.map
+
+-
+
+  Path information is allowed but no file extensions, examples:
+
+    NOT ALLOWED:  +foobar.cfg
+    NOT ALLOWED:  qbsp3 +f:\games\quake2\maps\foobar.cfg
+    Allowed:      +foobar
+    Allowed:      qbsp3 +f:\games\quake2\maps\foobar
+
+-
+
+  parameters beginning with a '+' only load configuration files when qbsp3 is expecting
+  an actual parameter and not a value for a parameter.  The following would not trigger
+  loading a configuration file:
+
+    qbsp3 -micro +2.0 mymap.map
+
+  as the +2.0 would get used by the -micro parameter as a number.
+
+====
+
+  Additional Information on Error Messages
+
+  A number of error messages now have additional information that can help locate
+  where a problem in a map is.  With the error messages that report last brush
+  processed, the problem probably occurs a few lines after the reported brush ends.
+
+  entity %i, brush %i: bounds out of range
+    Bounding box of problem area
+    Line brush starts in file
+
+  Entity %i, Brush %i: duplicate plane
+    Line brush starts in file
+
+  Entity %i, Brush %i: mirrored plane
+    Line brush starts in file
+
+  Entity %i, Brush %i: mixed face contents
+    Line brush starts in file
+
+  entity %i, brush %i: no visible sides on brush
+    Bounding box of problem area
+    Line brush starts in file
+
+  Entity %i, Brush %i: origin brushes not allowed in world
+    Line brush starts in file
+
+  Entity %i: func_areaportal can only be a single brush
+    Line last brush processed starts in file
+
+  FloatPlane: bad normal
+    Coordinates of bad coordinate triple
+    Line brush starts in file
+
+  ParseEntity: { not found
+    Line last brush processed starts in file
+
+  ParseEntity: EOF without closing brace
+    Line last brush processed starts in file
+
+  parsing brush
+    Line brush starts in file
+
+  SubdivideFace: didn't split the polygon
+    Bounding box of problem area
+
+  Tried Parent
+    Bounding box of problem area
+
+  WARNING: areaportal entity %i doesn't touch two areas
+    Bounding box of problem area
+
+  WARNING: areaportal entity %i touches > 2 areas
+    Line last brush processed starts in file
+
+  WARNING: entity %i, brush %i: microbrush
+    Bounding box of problem area
+
+  WARNING: node with unbounded volume
+    Bounding box of problem area
+
+  WARNING: node without a volume
+    Bounding box of problem area
+
+====
+
+Additional Notes
+
+  I have removed all DLL linkages,  they were not being used (except as noted
+  above for -draw).
+
+  Brush planes can now have fractional coordinate values.
+
+  Found a few problems with the line counting in qbsp3 (it wasn't checking
+  for new lines in comments among other things) that may result incorrect
+  line numbers being reported.  This has been greatly improved.  May not
+  be 100% reliable though.
+
+  Fixed face merge bug originally reported by Alexander Malmberg
+
+  detail hint and detail skip faces are now allowed.  These should only be
+  used in areas that are completelely surrounded by structural hint brushes,
+  with only detail brushes inside this area.
+
+  Texture names are forced into lower case.  Some Quake2 editors, even to this
+  day, write textures out in all capitals.  This can cause crashes in when
+  using animated textures and stuff.
+
+  Forces at least one empty node.  This sidesteps a Quake2 bug.
+
+  An array overrun problem has been fixed.

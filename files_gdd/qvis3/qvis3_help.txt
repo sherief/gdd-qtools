@@ -1,0 +1,147 @@
+QVIS3 Revision 1.03
+===================
+
+Command Line parameters added to GDDQVIS3:
+
+  -cullerror
+
+  Prevents the Leaf portals saw into leaf error.  May run slightly faster during the
+  initial steps of qvis3.
+
+  ***********  This does not correct errors that may have occured during the qbsp3
+  * WARNING *  process that result in the bsp taking long to process and having
+  ***********  more visible polygons.  Do not use this if you are not using fixed
+               version of qbsp3 that currects the face merge bug, or possibly serious
+  slowdowns with map may be hidden.  Version 1.051 of gddqbsp3 fixes this along with
+  versions of qbsp3 by Alexander Malmberg and David Hyde.
+
+  -maxdist <distance>
+  -maxfovdist <fov> <distance>
+
+  This option keeps nodes that are more than <distance> units apart from being able
+  to see each other.  This happens during the fastvis stage, so you do not need to
+  full vis to see the effect.  However, use of this feature must be used with care,
+  as due to its very nature, cause hall of mirror effects unless you geometry is
+  set up right to hide this.  There are several uses for this.
+
+  One is if you have built your map such that it is not possible to see very far,
+  you can use this to prevent vis from even considering nodes that should not be
+  able to see each other anyway.  As the vis process is just an approximation,
+  you still have to be careful, and placement of hint brushes may be neccessary
+  to effectively use this feature for this.
+
+  THe other main use is with Quake 2 mods that feature fog.  If it is known that a
+  map will be used with fog that will not allow the user to see farther than a
+  certain distance away, then there is no need to draw geometry past this point.
+  Some care has to be taken with this as most hardware only checks against z
+  value instead of true distance to the eye.  Objects on the edge of the screen
+  will fog out at farther distances from the eye than objects directly in front
+  of the eye.  The <fov> parameter on the second version will make the adjustments
+  neccessary to <distance> to correct for this, so you don't have to do the math
+  yourself.  Put in the maximum fov you expect a user to be using with this map.
+  If a user uses a higher FOV, then HOM effects may start appearing around the
+  corners and edges of the screen.
+
+  Standard Quake 2 does not support fog, it is only possible through mods that
+  support it.
+
+Configuration Files
+
+  I have added support for configuration files.  When qvis3 loads up, it will look
+  for a file called qvis3.cfg.  It looks in the directory you launched the program
+  from so if you did:
+
+     d:\games\quake2\utils\maps> f:\quake2\utils\qvis3 mymap.bsp
+
+  it would look for qvis3.cfg in d:\games\quake2\utils\maps, not f:\quake2\utils.
+
+-
+
+  In the configuration file itself, you can add additional command line parameters,
+  each line being a seperate parameter.  Lines beginning with a semi-colon (';')
+  and blank lines are ignored.  qvis3.cfg command line parameters are processed
+  before any actual command line parameters. If you had a qvis3.cfg with the
+  following contents:
+    
+    -level 2
+
+  then ran:
+
+    qvis3 mymap.bsp
+
+  It would be exactly the same as if you ran (with no qvis3.cfg present):
+
+    qvis3 -level 2 mymap.bsp
+
+-
+
+  Additionally, you can call other configuration files from the command line by
+  prefixing its name with a '+'.  The contents are processed at that point.  If
+  your qvis3.cfg has the following contents (first line is an ignored comment,
+  second line is an ignored blank line in this particular example):
+
+      ; Give verbose output
+    
+      -v
+
+  and a file called final.cfg with the following contents:
+
+      -level
+      4
+      -threads
+      5
+
+  then ran:
+
+    qvis3 -nosort +final mymap.bsp
+
+  It would be exactly the same as if you ran (with no configuration files at all):
+
+    qvis3 -v -nosort -level 4 -threads 5 mymap.bsp
+
+-
+
+  Path information is allowed but no file extensions, examples:
+
+    NOT ALLOWED:  +foobar.cfg
+    NOT ALLOWED:  qvis3 +f:\games\quake2\maps\foobar.cfg
+    Allowed:      +foobar
+    Allowed:      qvis3 +f:\games\quake2\maps\foobar
+
+-
+
+  parameters beginning with a '+' only load configuration files when qvis3 is expecting
+  an actual parameter and not a value for a parameter.  The following would not trigger
+  loading a configuration file:
+
+    qvis3 -level +2 mymap.bsp
+
+  as the +2 would get used by the -level parameter as a number.
+
+====
+
+Additional Notes
+
+  You may use full path information for file names such as:
+
+    qvis3 c:\games\quake2\maps\mymap.bsp
+
+  If you do not give full path information, it will look for the map in your current
+  working directory  Thus:
+
+    c:\quake2\utils> qvis3 maps\mymap.bsp
+
+  will try to find c:\quake2\utils\maps\mymap.bsp
+
+-
+
+  I have removed all DLL linkages,  they were not being used.
+
+-
+
+  The requirement for the file to be in a directory with 'quake2' in the path has
+  ben completely removed, even with partial path file names.
+
+-
+
+  One source of hall of mirror effects has been removed.

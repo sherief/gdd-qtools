@@ -1,0 +1,256 @@
+QRAD3 Revision 1.04
+===================
+
+Command Line parameters added to GDDQRAD3:
+
+   -help
+ 
+        Shows you all the various options that are available.
+
+   -noblock.
+
+        Architecture does not cast shadows.  Can be use as a preview.
+
+   -nocolor
+
+        Disables colored lighting.  All colored light is computed as normal,
+        but final lighting results are converted to grayscale according to
+        the formula that is used to compute the Y signal of a color television
+        broadcast (which is what a black & white television displays). The
+        colors are not weighted equally (0.299Red + 0.587Green + 0.144Blue).
+        A green of the same intensity as a blue will convert to a brighter
+        lightmap than the blue.  Red falls in the middle.
+
+   -memory
+
+        Runs in a memory conservation mode.  This is a MASSIVE speed/
+        memory tradeoff if you are not using "-bounce 0" or "-bounce 1".
+        qrad3 defaults to "-bounce 8".  There is a set of calculations
+        that involve a huge amount of memory and processing time that
+        normally only gets called once.  Using this option will cause
+        them to get called once per bounce.
+
+        This probably should only be done as a last resort if you can't
+        find enough disk space for virtual memory to run it otherwise,
+        as I suspect it will probably read the pre-computed data off disk
+        much faster then it can compute it on the fly. I have not run
+        tests to verify this however.
+
+        Use of -radmin should make this completely unneccessary.
+
+   -savetrace
+
+        Same as -memory, but saves certain information so it does not have
+        recompute line of sight calculations.  This takes up about 1/30 the
+        memory of not using -memory or -savetrace at all.
+
+        Again, this should probably used as a last resort, especially with
+        hight -bounce values.
+
+        Use of -radmin should make this completely unneccessary.
+
+   Because of certain thread safety issues, use of either -memory or
+   -savetrace will force qrad3 into using only a single thread (only
+   really significant if you have more than one processor).
+
+   -radmin #
+
+        Radiosity Minimum.  This is a cutoff for radiosity so reflected
+        light does not shine between surfaces that are far apart.  The
+        number for the parameter involves several different factors, not
+        just distance.  This has the potential to extremely reduce amount
+        of memory and time the radiosity portion of qrad3 takes.  This
+        values defaults to 0.
+
+        This will probably cause differences in how a level looks, the
+        higher the parameter value, the more extreme.  A good starting
+        value would probably be 0.001, adjusting from there as suits
+        your needs.
+
+   -gamedir <path>
+
+       This will set the game directory that qrad3 uses to locate
+       textures.  Note that this isn't the textures directory itself,
+       but the parent directory where the pak files are.  Thus you could
+       do:
+
+           qrad3 -gamedir d:\games\quake2\baseq2 mymap.map
+
+  -moddir <path>
+
+      Directory for a mod.  When looking for textures, it will search this
+      directory first before looking in the main directory.  As above, this
+      the directory where the pak files reside.  Thus you could do (assumes it
+      will default to d:\games\quake2\baseq2 for main game directory):
+
+           qrad3 -moddir d:\games\quake2\coolmod mymap.map
+
+      When looking for a texture, it will first look in arena, then if it could
+      not find it, would look in baseq2.  If moddir is not set, it is not used
+      at all.
+
+   When looking for textures, if it does not find it unpacked in the textures
+   directory, it will search the pak file itself.  If you set the mod directory,
+   it will search in the following order:
+
+     moddir:textures -> moddir:pakfile -> gamedir:textures -> gamedir:pakfile
+
+=====
+
+Entity fields added to GDDQRAD3:
+
+    _wait
+   wait
+
+        _wait controls how light fades with distance.  Operates just like it
+        did in ArghLite for Q1.  A value of 1 is normal, smaller causes it to
+        fall off slower, higher causes it to fall off quicker.  This is for
+        entity lights only.  Surface light alterations cannot be done on an
+        indiviual basis due to the map format.
+
+        wait can be used in place of _wait, but will will cause Quake 2 to
+        complain.  It is there for compatability purposes with Quake 1 maps
+        that used a wait parameter that are converted over.
+
+    _angwait
+
+        _angwait controls how light fades with the angle it strikes a surface at.
+        A value of 1 is normal.  Smaller numbers reduces how quickly it fades.
+        Larger numbers makes it fade much quicker.
+
+        _angwait is not a simple modifier, you will have to play with it to get a
+        good feel for it.
+
+=====
+
+Sun features
+
+
+   By placing a "_sun" entity key in the worldspawn, you can change how
+   light emmiting sky textures work.  There are 2 parts, ambient and
+   direct.
+
+   If "_sun" is not present in the worldspawn, skies with the light property
+   are treated as any other light surface.
+
+   When a sky surface based light strikes a surface, the ambient sun value
+   will be applied to that surface.  No angle of lighting or distance effects
+   the ambient light intensity.
+
+   When a sky surface based light strike a surface, it will also determine
+   if there is a section of sky visible in the direction of the sun (directly
+   visible to the sun).  If it is, it will apply the light value of the sun,
+   adjusted for angle of lighting but NOT distance.
+
+   A light value of 0 is allowed, but qrad3 will print warning messages.  But
+   the light flag on the surface properties must be set, or it will just be an
+   ordinate sky.
+
+   The sun defaults to high noon, if you want to put the sun in another
+   direction, place a light on the map.  Target it on an info_null.  This
+   info_null will will have a target_name same as the _sun parameter value.
+   This will be the direction the light comes in from.  If the target of
+   the light cannot be found, it will assume it is aimed at 0,0,0.  This
+   is a special spot light.
+ 
+   The following parameters are put in the worldspawn (worldspawn define
+   later):
+
+   "_sun"          Give this the same target as the target for the light
+                   that is governing the position of the sun.  Defaults
+                   to high noon.  If you want to use the default, put
+                   an unused target name here, don't leave it blank.
+       
+   "_sun_light"    The intensity of the sun.  Defaults to 250.
+
+   "_sun_ambient"  The ambient value for the sun.  Defaults to 0.
+
+   "_sun_color"    The color of the sun.  Defaults to a color derived
+                   from the sky texture. 
+
+   Due to the way I check for the sky, It is best to avoid putting non-sky
+   surfaces on the same plane as a sky surface, or some surfaces may be lit
+   that shouldn't.  If a non-sky brush is sharing a plane with a sky brush but
+   is not at all visible to each other, this should not be a problem.
+
+   An example map (thesun.map) has an example of using the sun.
+
+   The worldspawn is the part where you set entity values that effect the entire
+   map.  Some examples of other things that are set in the worldspawn are
+   "message" and"gravity".  It is where the texture wad in Quake 1 maps was set.
+
+====
+
+Configuration Files
+
+  I have added support for configuration files.  When qbsp3 loads up, it will look
+  for a file called qrad3.cfg.  It looks in the directory you launched the program
+  from so if you did:
+
+     d:\games\quake2\utils\maps> f:\quake2\utils\qrad3 mymap.bsp
+
+  it would look for qrad3.cfg in d:\games\quake2\utils\maps, not f:\quake2\utils.
+
+-
+
+  In the configuration file itself, you can add additional command line parameters,
+  each line being a seperate parameter.  Lines beginning with a semi-colon (';')
+  and blank lines are ignored.  qrad3.cfg command line parameters are processed
+  before any actual command line parameters. If you had a qbsp3.cfg with the
+  following contents:
+    
+      -gamedir
+      f:\games\quake2\baseq2
+
+  then ran:
+
+    qrad3 mymap.bsp
+
+  It would be exactly the same as if you ran (with no qrad3.cfg present):
+
+    qrad3 -gamedir f:\games\quake2\baseq2 mymap.bsp
+
+-
+
+  Additionally, you can call other configuration files from the command line by
+  prefixing its name with a '+'.  The contents are processed at that point.  If
+  your qrad3.cfg has the following contents (first line is an ignored comment,
+  second line is an ignored blank line in this particular example):
+
+      ; Set game directory so qrad3 can find textures.
+    
+      -gamedir
+      f:\games\quake2\baseq2
+
+  and a file called ctf.cfg with the following contents:
+
+      -moddir
+      f:\games\quake2\ctf
+
+  then ran:
+
+    qrad3 -extra +ctf mymap.bsp
+
+  It would be exactly the same as if you ran (with no configuration files at all):
+
+    qrad3 -gamedir f:\games\quake2\baseq2 -extra -moddir f:\games\quake2\ctf mymap.bsp
+
+-
+
+  Path information is allowed but no file extensions, examples:
+
+    NOT ALLOWED:  +foobar.cfg
+    NOT ALLOWED:  qrad3 +f:\games\quake2\maps\foobar.cfg
+    Allowed:      +foobar
+    Allowed:      qrad3 +f:\games\quake2\maps\foobar
+
+-
+
+  parameters beginning with a '+' only load configuration files when qbsp3 is expecting
+  an actual parameter and not a value for a parameter.  The following would not trigger
+  loading a configuration file:
+
+    qrad3 -chop +64 mymap.map
+
+  as the +64 would get used by the -chop parameter as a number.
+

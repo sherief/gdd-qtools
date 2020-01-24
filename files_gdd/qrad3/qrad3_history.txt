@@ -1,0 +1,49 @@
+QRAD3 History
+=============
+
+Revision 1.04
+
+* Seperate Pentium and Pentium Pro executables.
+* Added configuration file support.
+* Broke up documentation into seperate files.
+* Added -radmin parameter.
+* Added -savetrace flag.
+* Fixed bug that caused problems with _sun when a sky surface
+  had a light value smaller than 3.
+
+----
+
+Revision 1.03
+
+* Sun features, and wait now begin with underscore.
+* _angwait light entity field added.
+* -nocolor flag added.
+
+----
+
+Revision 1.02
+
+* Removed error message mentioned below.  It was misleading and not
+  even an error under most circumstances.
+* Added Sun features.
+* Removed -fasttrace.  Was severely broken.
+* Added -noblock.
+* Added wait light entity field.
+
+----
+
+Revision 1.01
+
+* Added -fasttrace flag.  This triggers speed ups mentioned below.  Not
+  on by default.
+* Added -memory flag.
+
+----
+
+Revision 1.00 (Original modifications to id code)
+
+* Added -help flag.
+* Added -gamedir flag.
+* Added -moddir flag.
+* Attemp to speed up lighting calculations.
+* Added error message.

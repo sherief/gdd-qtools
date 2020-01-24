@@ -1,0 +1,82 @@
+QBSP3 History
+
+=============
+
+Revision 1.09
+
+* -origfix parameter added to fix a texture alignment issue.
+
+====
+
+Revision 1.08
+
+* Fixed an array overrun problem that can occur in large maps.
+
+
+=============
+
+Revision 1.07
+
+* Upper case texture names are converted to lowercase.
+* Forces at least one empty nodes.
+* Allows detail hint and skip brushes.
+
+----
+
+Revision 1.051
+
+* Removed low memory warnings (speed problems)
+
+----
+
+Revision 1.05
+
+* Removed Pentium Pro executable
+* Executable shows version information
+* Did even more complete job of removing unused DLL's
+* How bad normals are checked for can now be adjusted
+* Fix bounds checking so it checks all 3 axis
+* Fixed how line numbers are reported in some error messages
+* Added low memory warnings
+* Added additional information to some error messages
+* Fixed face merge bug originally reported by Alexander Malmberg
+
+----
+
+Revision 1.04
+
+* Seperate Pentium and Pentium Pro executables.
+* Added configuration file support.
+* Broke up documentation into seperate files.
+* Brush planes can now have fractional coordinate values.
+
+----
+
+Revision 1.03
+
+* Fixed a typo in the documention.
+* Killed a misleading error message that I should never have added in the
+  first place.
+
+----
+
+Revision 1.02
+
+* Fixed a typo.  Didn't merit a new version, probably should have just sat on
+  it until some real changes were made.
+
+----
+
+Revision 1.01
+
+* Removed DLL loading.
+* Removed automatic lowercase conversion for texture names added previously.
+
+----
+
+Revision 1.00 (Original modifications to id code)
+
+* Added -help flag.
+* Added -gamedir flag.
+* Added -moddir flag.
+* Added automatic lowercase conversion for texture names.

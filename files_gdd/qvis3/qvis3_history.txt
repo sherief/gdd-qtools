@@ -1,0 +1,30 @@
+QVIS3 History
+====
+
+Changes to 1.03:
+
+* Added -maxdist and -maxfovdist
+
+=============
+
+Changes to 1.02:
+
+* Removed Pentium Pro executable
+* Fix one source (not all) of hall of mirror errors
+* Added -cullerror parameter
+* Did even more complete job of removing unused DLL's
+
+=============
+
+Revision 1.01
+
+* Seperate Pentium and Pentium Pro executables.
+* Added configuration file support.
+* Broke up documentation into seperate files.
+* Completely removed need for file to be in a directory with 'quake2' in the path.
+
+----
+
+Revision 1.00 (Original modifications to id code)
+
+* Removed DLL loading.

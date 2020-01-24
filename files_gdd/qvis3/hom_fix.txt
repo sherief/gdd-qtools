@@ -1,0 +1,184 @@
+
+This function is a fixed version of the broken function in qvis3/flow.c.    The problems is near the bottom
+inside the second block of code in an
+
+  #if 1
+
+block.  There comparison of
+
+	if (d > p->radius)
+
+needs to be changed to
+
+	if (d > thread->base->radius)
+
+and change 
+
+	else if (d < -p->radius)
+
+to
+
+	else if (d < -thread->base->radius)
+=================================================================================================
+
+/*
+==================
+RecursiveLeafFlow
+
+Flood fill through the leafs
+If src_portal is NULL, this is the originating leaf
+==================
+*/
+void RecursiveLeafFlow (int leafnum, threaddata_t *thread, pstack_t *prevstack)
+{
+	pstack_t	stack;
+	portal_t	*p;
+	plane_t		backplane;
+	leaf_t 		*leaf;
+	int			i, j;
+	long		*test, *might, *vis, more;
+	int			pnum;
+
+	thread->c_chains++;
+
+	leaf = &leafs[leafnum];
+//	CheckStack (leaf, thread);
+
+	prevstack->next = &stack;
+
+	stack.next = NULL;
+	stack.leaf = leaf;
+	stack.portal = NULL;
+
+	might = (long *)stack.mightsee;
+	vis = (long *)thread->base->portalvis;
+	
+// check all portals for flowing into other leafs	
+	for (i=0 ; i<leaf->numportals ; i++)
+	{
+		p = leaf->portals[i];
+		pnum = p - portals;
+
+		if ( ! (prevstack->mightsee[pnum >> 3] & (1<<(pnum&7)) ) )
+		{
+			continue;	// can't possibly see it
+		}
+
+	// if the portal can't see anything we haven't allready seen, skip it
+		if (p->status == stat_done)
+		{
+			test = (long *)p->portalvis;
+		}
+		else
+		{
+			test = (long *)p->portalflood;
+		}
+
+		more = 0;
+		for (j=0 ; j<portallongs ; j++)
+		{
+			might[j] = ((long *)prevstack->mightsee)[j] & test[j];
+			more |= (might[j] & ~vis[j]);
+		}
+		
+		if (!more && 
+			(thread->base->portalvis[pnum>>3] & (1<<(pnum&7))) )
+		{	// can't see anything new
+			continue;
+		}
+
+		// get plane of portal, point normal into the neighbor leaf
+		stack.portalplane = p->plane;
+		VectorSubtract (vec3_origin, p->plane.normal, backplane.normal);
+		backplane.dist = -p->plane.dist;
+		
+//		c_portalcheck++;
+		
+		stack.portal = p;
+		stack.next = NULL;
+		stack.freewindings[0] = 1;
+		stack.freewindings[1] = 1;
+		stack.freewindings[2] = 1;
+		
+#if 1
+{
+float d;
+
+	d = DotProduct (p->origin, thread->pstack_head.portalplane.normal);
+	d -= thread->pstack_head.portalplane.dist;
+	if (d < -p->radius)
+	{
+		continue;
+	}
+	else if (d > p->radius)
+	{
+		stack.pass = p->winding;
+	}
+	else	
+	{
+		stack.pass = ChopWinding (p->winding, &stack, &thread->pstack_head.portalplane);
+		if (!stack.pass)
+			continue;
+	}
+}
+#else
+		stack.pass = ChopWinding (p->winding, &stack, &thread->pstack_head.portalplane);
+		if (!stack.pass)
+			continue;
+#endif
+
+	
+#if 1
+{
+float d;
+
+	d = DotProduct (thread->base->origin, p->plane.normal);
+	d -= p->plane.dist;
+	if (d > thread->base->radius)
+//	if (d > p->radius)
+	{
+		continue;
+	}
+//	else if (d < -p->radius)
+	else if (d < -thread->base->radius)
+	{
+		stack.source = prevstack->source;
+	}
+	else	
+	{
+		stack.source = ChopWinding (prevstack->source, &stack, &backplane);
+		if (!stack.source)
+			continue;
+	}
+}
+#else
+		stack.source = ChopWinding (prevstack->source, &stack, &backplane);
+		if (!stack.source)
+			continue;
+#endif
+
+		if (!prevstack->pass)
+		{	// the second leaf can only be blocked if coplanar
+
+			// mark the portal as visible
+			thread->base->portalvis[pnum>>3] |= (1<<(pnum&7));
+
+			RecursiveLeafFlow (p->leaf, thread, &stack);
+			continue;
+		}
+
+		stack.pass = ClipToSeperators (stack.source, prevstack->pass, stack.pass, false, &stack);
+		if (!stack.pass)
+			continue;
+		
+		stack.pass = ClipToSeperators (prevstack->pass, stack.source, stack.pass, true, &stack);
+		if (!stack.pass)
+			continue;
+
+		// mark the portal as visible
+		thread->base->portalvis[pnum>>3] |= (1<<(pnum&7));
+
+		// flow through it for real
+		RecursiveLeafFlow (p->leaf, thread, &stack);
+	}	
+}

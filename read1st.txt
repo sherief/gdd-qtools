@@ -1,0 +1,16 @@
+This archive contains the source to my version of the quake2 compile
+tools.  I am pretty much releasing the source under the same terms
+as the id released the original source.  I have included the text
+files that originally came with with the original id release of the
+compile tools, which resides in the id_docs/ directory.  gdd_files/
+contains the documentation and executables I released with each of
+the last releases of qbsp3, rvis3, and qrad3.  utils3/ contains the
+source itself.  While it can be copied over the original source, it
+is self-contained.  The last versions of these utilies were compiled
+with either Microsoft Visual C versions 5 and 6.
+
+It is not my intention for providing support on how to this this
+working, but I may help if I have the time.
+
+                           Geoffrey DeWan
+                           gdewan@prairienet.org
